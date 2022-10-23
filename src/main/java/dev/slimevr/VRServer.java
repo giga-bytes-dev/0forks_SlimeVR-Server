@@ -22,6 +22,7 @@ import io.eiren.util.OperatingSystem;
 import io.eiren.util.ann.ThreadSafe;
 import io.eiren.util.ann.ThreadSecure;
 import io.eiren.util.collections.FastList;
+import io.eiren.util.logging.LogManager;
 import solarxr_protocol.datatypes.TrackerIdT;
 
 import java.net.InetAddress;
@@ -237,18 +238,21 @@ public class VRServer extends Thread {
 	}
 
 	public void resetTrackers() {
+		LogManager.info("Reset: full");
 		queueTask(() -> {
 			humanPoseProcessor.resetTrackers();
 		});
 	}
 
 	public void resetTrackersMounting() {
+		LogManager.info("Reset: mounting");
 		queueTask(() -> {
 			humanPoseProcessor.resetTrackersMounting();
 		});
 	}
 
 	public void resetTrackersYaw() {
+		LogManager.info("Reset: fast");
 		queueTask(() -> {
 			humanPoseProcessor.resetTrackersYaw();
 		});
@@ -261,12 +265,14 @@ public class VRServer extends Thread {
 	}
 
 	public void setSkatingReductionEnabled(boolean value) {
+		LogManager.info("Skating correction: " + value);
 		queueTask(() -> {
 			humanPoseProcessor.setSkatingCorrectionEnabled(value);
 		});
 	}
 
 	public void setFloorClipEnabled(boolean value) {
+		LogManager.info("Floor clip: " + value);
 		queueTask(() -> {
 			humanPoseProcessor.setFloorClipEnabled(value);
 		});
