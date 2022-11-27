@@ -1,23 +1,14 @@
-import Quaternion from 'quaternion';
+import { Euler, Matrix4, Quaternion } from 'three';
 import { QuatT } from 'solarxr-protocol';
 
-export function QuaternionFromQuatT(q: {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}) {
-  return new Quaternion(q.x, q.y, q.z, q.w);
+export type QuatObject = { x: number; y: number; z: number; w: number; };
+
+export function QuaternionFromQuatT(q?: QuatObject | null) {
+  return q ? new Quaternion(q.x, q.y, q.z, q.w) : new Quaternion();
 }
 
-export function QuaternionToQuatT(q: {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}) {
+export function QuaternionToQuatT(q: QuatObject) {
   const quat = new QuatT();
-
   quat.x = q.x;
   quat.y = q.y;
   quat.z = q.z;
@@ -25,10 +16,38 @@ export function QuaternionToQuatT(q: {
   return quat;
 }
 
-export function FixEuler(yaw: number) {
-  if (yaw > 180) {
-    yaw *= -1;
-    yaw += 180;
-  }
-  return Math.round(yaw);
+const RAD_TO_DEG = 180 / Math.PI;
+
+export function getYRotationInDegrees(q?: QuatObject) {
+  if (!q) return 0;
+
+  //           X   Y    Z
+  // back:     0   0    0
+  // front: -180 0.. -180
+  // left:     0  90    0
+  // right:    0 -90    0
+
+  const angles = new Euler().setFromQuaternion(QuaternionFromQuatT(q));
+  return (angles.y | 0) ?
+    Math.round(angles.y * RAD_TO_DEG) :
+    Math.round(-angles.z * RAD_TO_DEG);
+}
+
+export function QuaternionToEulerDegrees(q?: QuatObject | null) {
+  const angles = { x: 0, y: 0, z: 0 };
+  if (!q) return angles;
+  
+  const a = new Euler().setFromQuaternion(new Quaternion(q.x, q.y, q.z, q.w));
+  return { x: a.x * RAD_TO_DEG, y: a.y * RAD_TO_DEG, z: a.z * RAD_TO_DEG };
+}
+
+export function makeReferenceAdjustedRotation(
+  trackerRotation: Quaternion,
+  gyroFix: Quaternion, attachmentFix: Quaternion, yawFix: Quaternion
+) {
+  return yawFix.clone().multiply(
+    gyroFix.clone()
+    .multiply(trackerRotation)
+    .multiply(attachmentFix)
+  );
 }

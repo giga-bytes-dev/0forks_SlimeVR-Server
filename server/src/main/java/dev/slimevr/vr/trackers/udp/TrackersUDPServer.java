@@ -238,6 +238,7 @@ public class TrackersUDPServer extends Thread {
 			ReferenceAdjustedTracker<IMUTracker> adjustedTracker = new ReferenceAdjustedTracker<>(
 				imu
 			);
+			imu.referenceAdjusted = adjustedTracker;
 
 			connection.getTrackers().add(imu);
 			trackersConsumer.accept(adjustedTracker);

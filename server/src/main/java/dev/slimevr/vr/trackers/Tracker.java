@@ -50,6 +50,8 @@ public interface Tracker {
 
 	boolean hasPosition();
 
+	boolean hasAcceleration();
+
 	boolean isComputed();
 
 	int getTrackerId();

@@ -146,6 +146,11 @@ public class ComputedTracker implements Tracker, TrackerWithTPS {
 	}
 
 	@Override
+	public boolean hasAcceleration() {
+		return false;
+	}
+
+	@Override
 	public boolean isComputed() {
 		return true;
 	}

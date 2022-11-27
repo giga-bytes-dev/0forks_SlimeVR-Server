@@ -1,5 +1,5 @@
 import { IPv4 } from 'ip-num/IPNumber';
-import Quaternion from 'quaternion';
+import { Quaternion, Euler } from 'three';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
@@ -8,8 +8,7 @@ import { useDebouncedEffect } from '../../hooks/timeout';
 import { useTrackerFromId } from '../../hooks/tracker';
 import { useWebsocketAPI } from '../../hooks/websocket-api';
 import {
-  FixEuler,
-  QuaternionFromQuatT,
+  getYRotationInDegrees,
   QuaternionToQuatT,
 } from '../../maths/quaternion';
 import { ArrowLink } from '../commons/ArrowLink';
@@ -21,6 +20,8 @@ import { MountingSelectionMenu } from '../onboarding/pages/mounting/MountingSele
 import { SingleTrackerBodyAssignmentMenu } from './SingleTrackerBodyAssignmentMenu';
 import { TrackerCard } from './TrackerCard';
 import { bodypartToString } from '../utils/formatting';
+import { useConfig } from '../../hooks/config';
+import { IMUVisualizerWidget } from '../widgets/IMUVisualizerWidget';
 
 const rotationToQuatMap = {
   FRONT: 180,
@@ -37,6 +38,7 @@ const rotationsLabels = {
 };
 
 export function TrackerSettingsPage() {
+  const { config } = useConfig();
   const { sendRPCPacket } = useWebsocketAPI();
   const [firstLoad, setFirstLoad] = useState(false);
   const [selectRotation, setSelectRotation] = useState<boolean>(false);
@@ -60,7 +62,8 @@ export function TrackerSettingsPage() {
 
     const assignreq = new AssignTrackerRequestT();
     assignreq.mountingRotation = QuaternionToQuatT(
-      Quaternion.fromEuler(0, +mountingOrientation, 0)
+      new Quaternion()
+      .setFromEuler(new Euler(0, +mountingOrientation * (Math.PI / 180), 0))
     );
     assignreq.bodyPosition = tracker?.tracker.info?.bodyPart || BodyPart.NONE;
     assignreq.trackerId = tracker?.tracker.trackerId;
@@ -81,11 +84,7 @@ export function TrackerSettingsPage() {
   const currRotation = useMemo(
     () =>
       tracker?.tracker.info?.mountingOrientation
-        ? FixEuler(
-            QuaternionFromQuatT(
-              tracker.tracker.info?.mountingOrientation
-            ).toEuler().roll
-          )
+        ? getYRotationInDegrees(tracker?.tracker.info?.mountingOrientation)
         : rotationToQuatMap.BACK,
     [tracker?.tracker.info?.mountingOrientation]
   );
@@ -191,6 +190,9 @@ export function TrackerSettingsPage() {
               </Typography>
             </div>
           </div>
+
+          { tracker?.tracker && config?.debug &&
+            <IMUVisualizerWidget tracker={tracker?.tracker}></IMUVisualizerWidget> }
         </div>
         <div className="flex flex-col flex-grow  bg-background-70 rounded-lg p-5 gap-3">
           <ArrowLink to="/">Go back to trackers list</ArrowLink>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BodyPart, TrackerDataT, TrackerStatus } from 'solarxr-protocol';
 import { bodypartToString } from '../components/utils/formatting';
-import { QuaternionFromQuatT } from '../maths/quaternion';
+import { makeReferenceAdjustedRotation, QuaternionFromQuatT, QuaternionToEulerDegrees } from '../maths/quaternion';
 import { useAppContext } from './app';
 
 export function useTrackers() {
@@ -37,6 +37,37 @@ export function useTrackers() {
 }
 
 export function useTracker(tracker: TrackerDataT) {
+  const referenceAdjustedRotation = (opts?: { withoutMountingPos?: boolean }) => {
+    const isAssignedIMUTracker = tracker.rotation &&
+      tracker.info?.mountingOrientation &&
+      tracker.info?.refAdjGyroFix &&
+      tracker.info?.refAdjAttachmentFix &&
+      tracker.info?.refAdjYawFix;
+    if (!isAssignedIMUTracker) return QuaternionFromQuatT(tracker?.rotation);
+    
+    const quatRotation = QuaternionFromQuatT(tracker.rotation);
+    const quatMounting = QuaternionFromQuatT(tracker.info?.mountingOrientation);
+    if (opts?.withoutMountingPos) {
+      return makeReferenceAdjustedRotation(
+        quatRotation.clone().multiply(quatMounting),
+        QuaternionFromQuatT(tracker.info?.refAdjGyroFix)
+          .invert()
+          .multiply(quatMounting.clone().invert())
+          .invert(),
+        QuaternionFromQuatT(tracker.info?.refAdjAttachmentFix)
+          .multiply(quatMounting.clone().invert()),
+        QuaternionFromQuatT(tracker.info?.refAdjYawFix),
+      );
+    }
+
+    return makeReferenceAdjustedRotation(
+      quatRotation.clone().multiply(quatMounting),
+      QuaternionFromQuatT(tracker.info?.refAdjGyroFix),
+      QuaternionFromQuatT(tracker.info?.refAdjAttachmentFix),
+      QuaternionFromQuatT(tracker.info?.refAdjYawFix),
+    );
+  }
+
   return {
     useName: () =>
       useMemo(() => {
@@ -46,13 +77,22 @@ export function useTracker(tracker: TrackerDataT) {
       }, [tracker.info]),
     useRotation: () =>
       useMemo(
-        () =>
-          QuaternionFromQuatT({
-            x: tracker.rotation?.x || 0,
-            y: tracker.rotation?.y || 0,
-            z: tracker.rotation?.z || 0,
-            w: tracker.rotation?.w || 1,
-          }).eulerAngles,
+        () => QuaternionToEulerDegrees(tracker?.rotation),
+        [tracker.rotation]
+      ),
+    useReferenceAdjustedRotation: () => 
+      useMemo(
+        () => QuaternionToEulerDegrees(referenceAdjustedRotation()),
+        [tracker.rotation]
+      ),
+    useReferenceAdjustedRotationQuat: () => 
+      useMemo(
+        () => referenceAdjustedRotation(),
+        [tracker.rotation]
+      ),
+    useReferenceAdjustedRotationNoMountingQuat: () => 
+      useMemo(
+        () => referenceAdjustedRotation({ withoutMountingPos: true }),
         [tracker.rotation]
       ),
     useVelocity: () => {
@@ -67,8 +107,8 @@ export function useTracker(tracker: TrackerDataT) {
 
       useEffect(() => {
         if (tracker.rotation) {
-          const rot = QuaternionFromQuatT(tracker.rotation).mul(
-            QuaternionFromQuatT(previousRot.current).inverse()
+          const rot = QuaternionFromQuatT(tracker.rotation).multiply(
+            QuaternionFromQuatT(previousRot.current).invert()
           );
           const dif = Math.min(1, (rot.x ** 2 + rot.y ** 2 + rot.z ** 2) * 2.5);
           // Use sum of rotation of last 3 frames (0.3sec) for smoother movement and better detection of slow movement.

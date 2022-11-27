@@ -52,6 +52,7 @@ public class IMUTracker
 	protected boolean magnetometerCalibrated = false;
 	protected BufferedTimer timer = new BufferedTimer(1f);
 	protected QuaternionMovingAverage movingAverage;
+	public ReferenceAdjustedTracker<IMUTracker> referenceAdjusted = null;
 
 	public IMUTracker(
 		UDPDevice device,
@@ -178,13 +179,23 @@ public class IMUTracker
 		return true;
 	}
 
-	@Override
-	public boolean getRotation(Quaternion store) {
+	public boolean getRawRotation(Quaternion store) {
+		store.set(rotQuaternion);
+		return true;
+	}
+
+	public boolean getFilteredRotation(Quaternion store) {
 		if (movingAverage != null) {
 			store.set(movingAverage.getFilteredQuaternion());
 		} else {
 			store.set(rotQuaternion);
 		}
+		return true;
+	}
+
+	@Override
+	public boolean getRotation(Quaternion store) {
+		this.getFilteredRotation(store);
 		// correction.mult(store, store); // Correction is not used now to
 		// prevent
 		// accidental errors while debugging other things
@@ -304,6 +315,11 @@ public class IMUTracker
 	@Override
 	public boolean hasPosition() {
 		return false;
+	}
+
+	@Override
+	public boolean hasAcceleration() {
+		return true;
 	}
 
 	@Override

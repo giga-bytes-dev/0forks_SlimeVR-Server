@@ -3,10 +3,14 @@ import { Typography } from '../commons/Typography';
 
 export function TrackerBattery({
   value,
+  voltage,
   disabled,
+  textColor = 'secondary',
 }: {
   value: number;
+  voltage?: number | null,
   disabled?: boolean;
+  textColor?: string;
 }) {
   return (
     <div className="flex gap-2">
@@ -15,9 +19,12 @@ export function TrackerBattery({
       </div>
       {!disabled && (
         <div className="w-10">
-          <Typography color="secondary">
+          <Typography color={textColor}>
             {(value * 100).toFixed(0)} %
           </Typography>
+          { voltage && <Typography color={textColor}>
+            {voltage.toFixed(2)} V
+          </Typography> }
         </div>
       )}
       {disabled && (

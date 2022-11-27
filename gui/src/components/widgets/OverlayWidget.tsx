@@ -7,6 +7,7 @@ import {
   usePubSub,
 } from '../../hooks/pubSub';
 import { CheckBox } from '../commons/Checkbox';
+import { Typography } from '../commons/Typography';
 
 export function OverlayWidget() {
   const { publish, subscribe, keyValues } = usePubSub();
@@ -63,17 +64,20 @@ export function OverlayWidget() {
 
   return (
     <form className="bg-background-60 flex flex-col w-full rounded-md px-2">
+      <div className="mt-2 px-1">
+        <Typography color="secondary">Overlay</Typography>
+      </div>
       <CheckBox
         control={control}
         name="isVisible"
         variant="toggle"
-        label="Show overlay in SteamVR"
+        label="Show in SteamVR"
       ></CheckBox>
       <CheckBox
         control={control}
         name="isMirrored"
         variant="toggle"
-        label="display overlay as mirror"
+        label="Display as mirror"
       ></CheckBox>
     </form>
   );

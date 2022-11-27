@@ -196,6 +196,11 @@ public class ReferenceAdjustedTracker<E extends Tracker> implements Tracker {
 	}
 
 	@Override
+	public boolean hasAcceleration() {
+		return tracker.hasAcceleration();
+	}
+
+	@Override
 	public boolean isComputed() {
 		return tracker.isComputed();
 	}

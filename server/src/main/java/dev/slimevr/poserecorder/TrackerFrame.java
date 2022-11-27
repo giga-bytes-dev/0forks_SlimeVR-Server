@@ -184,6 +184,11 @@ public final class TrackerFrame implements Tracker {
 	}
 
 	@Override
+	public boolean hasAcceleration() {
+		return false;
+	}
+
+	@Override
 	public boolean isComputed() {
 		return true;
 	}

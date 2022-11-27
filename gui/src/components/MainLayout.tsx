@@ -7,6 +7,8 @@ import { ResetButton } from './home/ResetButton';
 import { TopBar } from './TopBar';
 import classNames from 'classnames';
 import { OverlayWidget } from './widgets/OverlayWidget';
+import { useConfig } from '../hooks/config';
+import { DeveloperModeWidget } from './widgets/DeveloperModeWidget';
 
 export function MainLayoutRoute({
   children,
@@ -17,6 +19,7 @@ export function MainLayoutRoute({
   background?: boolean;
   widgets?: boolean;
 }) {
+  const { config } = useConfig();
   const { layoutHeight, ref } = useLayout<HTMLDivElement>();
   const { layoutWidth, ref: refw } = useLayout<HTMLDivElement>();
 
@@ -50,6 +53,10 @@ export function MainLayoutRoute({
                 <div className="w-full">
                   <OverlayWidget></OverlayWidget>
                 </div>
+                {config?.debug &&
+                  <div className="w-full">
+                    <DeveloperModeWidget></DeveloperModeWidget>
+                  </div>}
               </div>
             )}
           </div>
