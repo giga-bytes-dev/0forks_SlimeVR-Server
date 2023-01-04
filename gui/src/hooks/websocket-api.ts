@@ -17,6 +17,7 @@ import { useInterval } from './timeout';
 export interface WebSocketApi {
   isConnected: boolean;
   isFirstConnection: boolean;
+  reconnect: () => void;
   useRPCPacket: <T>(type: RpcMessage, callback: (packet: T) => void) => void;
   useDataFeedPacket: <T>(
     type: DataFeedMessage,
@@ -51,9 +52,8 @@ export function useProvideWebsocketApi(): WebSocketApi {
 
   useInterval(() => {
     if (webSocketRef.current && !isConnected) {
-      disconnect();
-      connect();
-      console.log('Try reconnecting');
+      console.log('Attempting to reconnect');
+      reconnect();
     }
   }, 3000);
 
@@ -175,6 +175,14 @@ export function useProvideWebsocketApi(): WebSocketApi {
     webSocketRef.current.removeEventListener('message', onMessage);
   };
 
+  const reconnect = () => {
+    if (webSocketRef.current && isConnected) {
+      webSocketRef.current.close();
+    }
+    disconnect();
+    connect();
+  };
+
   useEffect(() => {
     connect();
     return () => {
@@ -185,6 +193,7 @@ export function useProvideWebsocketApi(): WebSocketApi {
   return {
     isConnected,
     isFirstConnection,
+    reconnect,
     useDataFeedPacket: <T>(
       type: DataFeedMessage,
       callback: (packet: T) => void
